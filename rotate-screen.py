@@ -58,7 +58,7 @@ def get_cfg_path() -> Path:
 def rotate(screen: Screen, orientation):
     execute(['xrandr', '--output', screen.name, '--rotate', orientation])
     for device in screen.devices:
-        execute(['xrandr', '--map-to-output', device, screen.name])
+        execute(['xinput', '--map-to-output', device, screen.name])
 
 
 def get_current_orientation(screen: str):
