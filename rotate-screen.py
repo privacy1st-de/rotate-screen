@@ -69,13 +69,18 @@ def get_current_orientation(screen: str):
     - stdout includes line: eDP connected primary 2880x1620+0+0 (0x55) normal (normal left inverted right x axis y axis) 344mm x 194mm
     - screen: eDP
     - returns: normal
+
+    Example:
+    - stdout includes line: eDP-1 connected 1920x1280+0+0 (0x46) normal (normal left inverted right x axis y axis) 222mm x 148mm
+    - screen: eDP-1
+    - returns: normal
     """
     stdout = execute(['xrandr', '--query', '--verbose'])
-    pattern = re.compile(rf'^({re.escape(screen)}\s.*)$', flags=re.MULTILINE)
+    # pattern = re.compile(rf'^{re.escape(screen)} .* \([^\)]+\) (\S+) \([^\)]+\) .*$', flags=re.MULTILINE)
+    pattern = re.compile(rf'^{re.escape(screen)} connected [^\(]+ \([^\)]+\) (\S+) \([^\)]+\) [^\(]+$', flags=re.MULTILINE)
     match = pattern.search(stdout)
     if match is None: raise Exception(f'Did not find screen {screen} in stdout:\n{stdout}')
-    line = match.group(1)
-    return line.rsplit()[5]
+    return match.group(1)
 
 
 def is_connected(screen: str):
