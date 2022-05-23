@@ -98,14 +98,12 @@ class Config:
                         break
                 if match is None:
                     raise Exception(f"Device {device['name']} not found.")
-                match.fail_ok = fail_ok
-                matches.append(match)
+                matches.append(Device(match.name, match.id, fail_ok))
             if "name_contains" in device:
                 matched = False
                 for x_dev in x_devs:
                     if device["name_contains"] in x_dev.name:
-                        x_dev.fail_ok = fail_ok
-                        matches.append(x_dev)
+                        matches.append(Device(x_dev.name, x_dev.id, fail_ok))
                         matched = True
                 if not matched:
                     raise Exception(f"No device found containing {device['name_contains']}.")
