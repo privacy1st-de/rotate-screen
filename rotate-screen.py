@@ -9,12 +9,17 @@ from typing import NamedTuple
 orientations = ['normal', 'right', 'inverted', 'left']
 
 
+class Device(NamedTuple):
+    name: str
+    id: int
+
+
 class Screen(NamedTuple):
     """
     The xrandr-name of a screen and a list of xinput-device-names that shall be mapped to the screen.
     """
     name: str
-    devices: list[str]
+    devices: list[Device]
 
 
 def main():
@@ -39,7 +44,7 @@ def rotate_clockwise():
 def rotate(screen: Screen, orientation):
     Xrandr.rotate(screen.name, orientation)
     for device in screen.devices:
-        Xinput.map_to_output(device, screen.name)
+        Xinput.map_to_output(device.id, screen.name)
 
 
 class Config:
@@ -66,20 +71,32 @@ class Config:
     def get_screens(self) -> list[Screen]:
         return [Screen(name=screen, devices=self.get_devices_for(screen)) for screen in self.screens]
 
-    def get_devices_for(self, screen: str) -> list[str]:
-        device_names = []
+    def get_devices_for(self, screen: str) -> list[Device]:
+        x_devs = Xinput.get_devices()
+        matches = []
 
         for device in self.devices:
             if device["screen"] != screen:
                 continue
             if "name" in device:
-                device_names.append(device["name"])
+                match = None
+                for x_dev in x_devs:
+                    if x_dev.name == device["name"]:
+                        match = x_dev
+                        break
+                if match is None:
+                    raise Exception(f"Device {device['name']} not found.")
+                matches.append(match)
             if "name_contains" in device:
-                for x_dev in Xinput.get_device_names():
-                    if device["name_contains"] in x_dev:
-                        device_names.append(x_dev)
+                matched = False
+                for x_dev in x_devs:
+                    if device["name_contains"] in x_dev.name:
+                        matches.append(x_dev)
+                        matched = True
+                if not matched:
+                    raise Exception(f"No device found containing {device['name_contains']}.")
 
-        return device_names
+        return matches
 
     def load_json(self) -> tuple[list[str], list]:
         j = json.loads(self.get_cfg_path().read_text())
@@ -91,7 +108,7 @@ class Config:
             raise Exception("'devices' array missing in cfg.")
         devices = j["devices"]
         for device in devices:
-            if not "name" in device and not "name_contains" in device:
+            if "name" not in device and "name_contains" not in device:
                 raise Exception("Device must have 'name' or 'name_contains'.")
 
         return screens, devices
@@ -152,14 +169,14 @@ class Xrandr:
 
 class Xinput:
     @classmethod
-    def map_to_output(cls, device: str, screen: str):
-        execute(['xinput', '--map-to-output', device, screen])
+    def map_to_output(cls, device_id: int, screen: str):
+        execute(['xinput', '--map-to-output', device_id, screen])
 
     @classmethod
-    def get_device_tuples(cls) -> list[(int, str)]:
+    def get_devices(cls) -> list[Device]:
         ids = cls.get_device_ids()
         names = [execute(['xinput', 'list', '--name-only', id_]).strip() for id_ in ids]
-        return [(id_, name) for id_, name in zip(ids, names)]
+        return [Device(name, id_) for id_, name in zip(ids, names)]
 
     @classmethod
     def get_device_names(cls) -> list[str]:
