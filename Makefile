@@ -13,7 +13,7 @@ all: install
 .PHONY: install
 install:
 	install -Dm0555 rotate-screen.py '$(DESTDIR)$(BINDIR)'rotate-screen
-	install -Dm0644 -o0 example.cfg  '$(DESTDIR)$(CFGDIR)'rotate-screen.cfg
+	install -Dm0644 -o0 example.json  '$(DESTDIR)$(CFGDIR)'rotate-screen.json
 
 .PHONY: check-pkgname
 check-pkgname:
@@ -23,4 +23,4 @@ check-pkgname:
 .PHONY: clean
 clean:
 	rm -rf '$(DESTDIR)$(BINDIR)'rotate-screen
-	rm -rf '$(DESTDIR)$(CFGDIR)'rotate-screen.cfg
+	rm -rf '$(DESTDIR)$(CFGDIR)'rotate-screen.json
