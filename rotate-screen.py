@@ -112,8 +112,9 @@ class Config:
 
         return matches
 
-    def load_json(self) -> tuple[list[str], list]:
-        j = json.loads(self.get_cfg_path().read_text())
+    @classmethod
+    def load_json(cls) -> tuple[list[str], list]:
+        j = json.loads(cls.get_cfg_path().read_text())
         if "screens" not in j:
             raise Exception("'screens' array missing in cfg.")
         screens = j["screens"]
