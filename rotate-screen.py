@@ -175,7 +175,7 @@ class Xinput:
     @classmethod
     def get_devices(cls) -> list[Device]:
         ids = cls.get_device_ids()
-        names = [execute(['xinput', 'list', '--name-only', id_]).strip() for id_ in ids]
+        names = [execute(['xinput', 'list', '--name-only', str(id_)]).strip() for id_ in ids]
         return [Device(name, id_) for id_, name in zip(ids, names)]
 
     @classmethod
