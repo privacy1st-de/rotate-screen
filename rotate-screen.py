@@ -3,6 +3,7 @@
 import json
 import subprocess
 import re
+import sys
 from pathlib import Path
 from typing import NamedTuple
 
@@ -12,6 +13,7 @@ orientations = ['normal', 'right', 'inverted', 'left']
 class Device(NamedTuple):
     name: str
     id: int
+    fail_ok: bool = False
 
 
 class Screen(NamedTuple):
@@ -44,7 +46,13 @@ def rotate_clockwise():
 def rotate(screen: Screen, orientation):
     Xrandr.rotate(screen.name, orientation)
     for device in screen.devices:
-        Xinput.map_to_output(device.id, screen.name)
+        try:
+            Xinput.map_to_output(device.name, screen.name)
+        except Exception as e:
+            if device.fail_ok:
+                print(f"Mapping of {device.name} to {screen.name} failed", file=sys.stderr)
+            else:
+                raise e
 
 
 class Config:
@@ -61,6 +69,8 @@ class Config:
             {"screen": "eDP-1", "name": "ELAN9038:00"},
             # ... or by `name_contains`.
             {"screen": "eDP-1", "name_contains": "ELAN9038"}
+            # If `fail_ok` is set to true, errors during mapping of device to screen are ignored.
+            {"screen": "eDP-1", "name_contains": "ELAN9038", "fail_ok": true}
           ]
         }
     """
@@ -78,6 +88,8 @@ class Config:
         for device in self.devices:
             if device["screen"] != screen:
                 continue
+            fail_ok = device["fail_ok"] if "fail_ok" in device else False
+
             if "name" in device:
                 match = None
                 for x_dev in x_devs:
@@ -86,11 +98,13 @@ class Config:
                         break
                 if match is None:
                     raise Exception(f"Device {device['name']} not found.")
+                match.fail_ok = fail_ok
                 matches.append(match)
             if "name_contains" in device:
                 matched = False
                 for x_dev in x_devs:
                     if device["name_contains"] in x_dev.name:
+                        x_dev.fail_ok = fail_ok
                         matches.append(x_dev)
                         matched = True
                 if not matched:
@@ -169,8 +183,8 @@ class Xrandr:
 
 class Xinput:
     @classmethod
-    def map_to_output(cls, device_id: int, screen: str):
-        execute(['xinput', '--map-to-output', str(device_id), screen])
+    def map_to_output(cls, device_name_or_id: str | int, screen: str):
+        execute(['xinput', '--map-to-output', str(device_name_or_id), screen])
 
     @classmethod
     def get_devices(cls) -> list[Device]:
@@ -197,7 +211,8 @@ def execute(command: list[str]) -> str:
         text=True,
     )
     if completed.returncode != 0:
-        raise Exception(f'Exit Code: {completed.returncode}\n'
+        raise Exception(f'Command: {command}\n'
+                        f'Exit Code: {completed.returncode}\n'
                         f'Stdout:\n{completed.stdout}\n'
                         f'Stderr:\n{completed.stderr}')
     return completed.stdout

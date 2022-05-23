@@ -1,6 +1,6 @@
 {
   "screens": ["eDP", "HDMI-A-0", "eDP-1"],
   "devices": [
-    {"screen": "eDP-1", "name_contains": "ELAN9038:00"}
+    {"screen": "eDP-1", "name_contains": "ELAN9038:00", "fail_ok":  true}
   ]
 }
