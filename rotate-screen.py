@@ -44,8 +44,10 @@ def rotate_clockwise():
 
 
 def rotate(screen: Screen, orientation):
+    print(f"Rotating {screen.name} ...")
     Xrandr.rotate(screen.name, orientation)
     for device in screen.devices:
+        print(f"  Mapping {device.name} to {screen.name}")
         try:
             Xinput.map_to_output(device.name, screen.name)
         except Exception as e:
