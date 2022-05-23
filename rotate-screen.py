@@ -170,7 +170,7 @@ class Xrandr:
 class Xinput:
     @classmethod
     def map_to_output(cls, device_id: int, screen: str):
-        execute(['xinput', '--map-to-output', device_id, screen])
+        execute(['xinput', '--map-to-output', str(device_id), screen])
 
     @classmethod
     def get_devices(cls) -> list[Device]:
